@@ -1,0 +1,139 @@
+
+@R1
+configure terminal
+!
+hostname R1
+!
+interface GigabitEthernet0/0
+description to_ABR_R2
+ip address 172.16.0.1 255.255.255.252
+no shut
+exit
+!
+interface GigabitEthernet0/1
+description to_ABR_R3
+ip address 172.16.0.5 255.255.255.252
+no shut
+exit
+!
+router ospf 1
+router-id 1.1.1.1
+network 172.16.0.0 0.0.0.255 area 0
+end
+!
+write
+!
+copy running-config startup-config
+
+
+@R2
+configure terminal
+!
+hostname R2
+!
+interface GigabitEthernet0/1
+description to_Backbone_R1
+ip address 172.16.0.2 255.255.255.252
+no shut
+!
+interface GigabitEthernet0/2
+description to_ASBR_R4
+ip address 10.10.10.1 255.255.255.252
+no shutdown
+exit
+!
+router ospf 1
+router-id 2.2.2.2
+area 1 nssa
+network 172.16.0.0 0.0.0.255 area 0
+network 10.10.10.0 0.0.0.255 area 1
+end
+!
+write
+!
+copy running-config startup-config
+
+
+@R3
+
+configure terminal
+!
+hostname R3
+!
+interface GigabitEthernet0/1
+description to_Backbone_R1
+ip address 172.16.0.6 255.255.255.252
+no shut
+!
+interface GigabitEthernet0/2
+description to_ASBR_R4
+ip address 10.10.10.5 255.255.255.252
+no shutdown
+exit
+!
+router ospf 1
+router-id 3.3.3.3
+area 1 nssa
+network 172.16.0.0 0.0.0.255 area 0
+network 10.10.10.0 0.0.0.255 area 1
+end
+!
+write
+!
+copy running-config startup-config
+
+
+@R4
+
+configure terminal
+!
+hostname R4
+!
+interface GigabitEthernet0/2
+description to_R2_ABR
+ip address 10.10.10.2 255.255.255.252
+no shutdown
+exit
+!
+interface GigabitEthernet0/3
+description to_R3_ABR
+ip address 10.10.10.6 255.255.255.252
+no shutdown
+exit
+!
+interface GigabitEthernet0/0
+description to_R5_External
+no shut
+ip address 192.168.20.1 255.255.255.0
+exit
+!
+router ospf 1
+router-id 4.4.4.4
+area 1 nssa
+network 10.10.10.0 0.0.0.255 area 1
+! redistribute external to ospf process !
+redistribute connected metric-type 1
+end
+!
+write
+!
+copy running-config startup-config
+
+
+@R5
+configure terminal
+!
+hostname R5
+!
+interface GigabitEthernet0/0
+description to_R4_ASBR
+ip address 192.168.20.2 255.255.255.0
+no shutdown
+exit
+!To have back-route to area 0, let's add a static route!
+ip route 0.0.0.0 0.0.0.0 192.168.20.1
+!
+end
+write
+!
+copy running-config startup-config
